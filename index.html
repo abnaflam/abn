@@ -2,140 +2,39 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>beIN MAX – Viewer</title>
-
+<title>beIN MAX</title>
 <style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#0f172a;
-  color:#fff;
-  text-align:center;
-}
-h1{
-  padding:15px;
-  margin:0;
-  color:#ff9800;
-  font-size:20px;
-}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:10px;
-  padding:10px;
-}
-.card{
-  background:#1e293b;
-  border-radius:12px;
-  padding:12px;
-  border:1px solid #334155;
-}
-.logo{
-  width:65px;
-  height:65px;
-  background:#fff;
-  border-radius:8px;
-  padding:4px;
-  object-fit:contain;
-}
-.name{
-  font-size:13px;
-  font-weight:bold;
-  margin:8px 0;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.quality{
-  font-size:11px;
-  color:#ff9800;
-  margin-bottom:10px;
-}
-.btn{
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:6px;
-  background:#ff9800;
-  font-weight:bold;
-  cursor:pointer;
-}
-#status{
-  padding:40px;
-  color:#ff9800;
-}
+body{background:#0f172a;color:#fff;font-family:Arial}
+.card{background:#1e293b;padding:10px;margin:10px;border-radius:8px}
+button{padding:8px;width:100%;background:#ff9800;border:0}
 </style>
 </head>
-
 <body>
 
-<h1>📺 beIN MAX المباشر</h1>
-<div id="status">⚡ جاري جلب القنوات...</div>
-<div id="content" class="grid"></div>
+<h3>beIN MAX</h3>
+<div id="out">جاري التحميل...</div>
 
 <script>
-// رابط API الأصلي
-const API =
-"https://cast-x.com/aghmdev/castxv2/api/get/?from=channels&cat=categories&parent=bein_max_mejar";
-
-// وسيط لتجاوز CORS (يعيد JSON كنص داخل HTML)
-const PROXY =
-"https://api.allorigins.win/raw?url=" + encodeURIComponent(API);
-
-// فك الرموز
-const symbols = {
-  '\u1d39':'H','\u1d43':'D','\u1d34':'1','\u1d49':'0',
-  '\u1d5b':'8','\u1d9c':'p','\u1d30':'7','\u1d38':'4',
-  '\u1d52':'8','\u02b7':'p'
-};
-const decodeStr = s =>
-  s.replace(/[\u1d30-\u02b7\u1d39\u1d43]/g, c => symbols[c] || c);
-
-// بناء رابط التشغيل
-function buildFinalLink(raw){
-  try{
-    const d = decodeURIComponent(decodeURIComponent(raw));
-    const p = new URLSearchParams(d.split("?")[1]);
-    return `https://cast-x.com/token.php?id=${p.get("id")}&type=hls&h=${
-      encodeURIComponent(decodeURIComponent(p.get("h")))
-    }&ts=${p.get("ts")}&sig=${p.get("sig")}`;
-  }catch{
-    return raw;
-  }
-}
-
-// جلب وعرض القنوات
-fetch(PROXY)
+fetch("https://orange-resonance-21fe.alysjc7.workers.dev")
 .then(r => r.json())
-.then(json => {
-  document.getElementById("status").style.display="none";
-  let html = "";
-
-  json.data.forEach(ch=>{
-    const title = decodeStr(ch.title);
-    const servers = JSON.parse(ch.servers);
-
-    servers.forEach(s=>{
-      const url = buildFinalLink(s.url);
-      html += `
+.then(j => {
+  let h = "";
+  j.data.forEach(c=>{
+    JSON.parse(c.servers).forEach(s=>{
+      h += `
       <div class="card">
-        <img class="logo" src="${ch.logo}">
-        <div class="name">${title}</div>
-        <div class="quality">${decodeStr(s.name)}</div>
-        <button class="btn"
-          onclick="window.open('https://cast-x.com/player/?stream=${encodeURIComponent(url)}','_blank')">
-          ▶ تشغيل
+        ${c.title}<br>
+        ${s.name}<br>
+        <button onclick="window.open('https://cast-x.com/player/?stream=${encodeURIComponent(s.url)}')">
+        تشغيل
         </button>
       </div>`;
     });
   });
-
-  document.getElementById("content").innerHTML = html;
+  document.getElementById("out").innerHTML = h;
 })
-.catch(()=>{
-  document.getElementById("status").textContent =
-  "❌ فشل جلب البيانات";
+.catch(e=>{
+  document.getElementById("out").innerText = "فشل الجلب";
 });
 </script>
 
