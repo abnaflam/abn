@@ -1,30 +1,834 @@
 <!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Player</title>
-    <script src="https://lxpop.com/pjs30.js" type="text/javascript"></script>
-    <style>
-        body { background-color: #000; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .video-container { width: 100%; max-width: 800px; aspect-ratio: 16/9; background: #1a1a1a; }
-    </style>
+<html lang="zh-CN">
+<head> 
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+<title>m3u8在线播放器 - 高清流畅播放体验</title> 
+<meta name="keywords" content="m3u8在线播放,m3u8播放器,在线m3u8,视频播放,HLS播放"> 
+<meta name="description" content="专业的m3u8在线播放器，支持各种HLS流媒体格式，无需安装插件，高清高清流畅流畅播放体验"> 
+<meta http-equiv="Cache-Control" content="no-siteapp">
+<meta name="renderer" content="webkit">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"> 
+<script src="https://s2.pstatp.com/cdn/expire-1-M/jquery/1.7.1/jquery.min.js" type="application/javascript"></script>
+<script src="https://s0.pstatp.com/cdn/expire-1-M/hls.js/0.10.1/hls.min.js" type="application/javascript"></script>
+<script src="https://s2.pstatp.com/cdn/expire-1-M/dplayer/1.25.0/DPlayer.min.js" type="application/javascript"></script>
+<link href="https://s2.pstatp.com/cdn/expire-1-M/dplayer/1.25.0/DPlayer.min.css" type="text/css" rel="stylesheet">
+<link href="https://s3.pstatp.com/cdn/expire-1-M/amazeui/2.7.2/css/amazeui.min.css" type="text/css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+/* 基础样式重置与全局设置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+html {
+    font-size: 62.5%;
+    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    scroll-behavior: smooth;
+}
+body {
+    background-color: #f0f2f5;
+    color: #333;
+    line-height: 1.6;
+    font-size: 1.4rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+/* 头部样式 */
+header {
+    background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 100%);
+    padding: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s ease;
+}
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.8;
+}
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 2;
+}
+/* 导航菜单样式 - 重点优化间距 */
+.nav-container {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 0;
+}
+.logo-container {
+    display: flex;
+    align-items: center;
+    margin-right: 0.5rem;
+}
+.logo-container img {
+    height: 36px;
+    margin-right: 0;
+    transition: transform 0.3s ease;
+}
+.logo-container img:hover {
+    transform: scale(1.05);
+}
+.main-nav {
+    display: flex;
+    gap: 1.5rem;
+    margin-left: 0.5rem;
+}
+.main-nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.4rem;
+    font-weight: 500;
+    padding: 0.6rem 0;
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.main-nav a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #ce93d8;
+    transition: width 0.3s ease;
+}
+.main-nav a:hover {
+    color: #e1bee7;
+}
+.main-nav a:hover::after {
+    width: 100%;
+}
+.main-nav a.active {
+    color: #e1bee7;
+}
+.main-nav a.active::after {
+    width: 100%;
+}
+/* 标题样式 */
+.header-title {
+    text-align: center;
+    padding: 0.6rem 0 1.5rem;
+}
+.header-title h1 {
+    color: white;
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin: 0;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+/* 主容器样式 */
+.container {
+    flex: 1;
+    max-width: 1200px;
+    width: 100%;
+    margin: 3rem auto;
+    padding: 0 2rem;
+}
+/* 输入区域样式 */
+.input-section {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+.input-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #6a1b9a, #8e24aa, #ba68c8);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+.input-section:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+}
+.input-section:hover::before {
+    transform: scaleX(1);
+}
+/* 输入框和按钮容器优化 */
+.input-container {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+#url {
+    flex: 1;
+    padding: 1.6rem 1.8rem;
+    font-size: 1.6rem;
+    border: 1px solid #e1e5eb;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background-color: #fafafa;
+    min-width: 0;
+}
+#url:focus {
+    border-color: #8e24aa;
+    box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.15);
+    outline: none;
+    background-color: white;
+}
+/* 播放按钮和下载按钮 */
+.btn-group {
+    display: flex;
+    gap: 0.8rem;
+}
+#doplayers, #downloadBtn {
+    background: linear-gradient(135deg, #6a1b9a 0%, #8e24aa 100%);
+    color: white;
+    border: none;
+    padding: 1.6rem 2.2rem;
+    border-radius: 8px;
+    font-size: 1.6rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    box-shadow: 0 4px 15px rgba(106, 27, 154, 0.3);
+    white-space: nowrap;
+    min-width: 130px;
+    flex-shrink: 0;
+    height: auto;
+}
+#doplayers:hover {
+    background: linear-gradient(135deg, #5b147d 0%, #7b1fa2 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(106, 27, 154, 0.4);
+}
+#doplayers:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(106, 27, 154, 0.3);
+}
+#downloadBtn {
+    background: linear-gradient(135deg, #00897b 0%, #00897b 100%);
+    display: none;
+}
+#downloadBtn:hover {
+    background: linear-gradient(135deg, #00796b 0%, #00796b 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 137, 123, 0.4);
+}
+#downloadBtn i {
+    font-size: 1.4rem;
+}
+/* 示例视频链接样式 */
+.example-link {
+    display: inline-block;
+    color: #6a1b9a;
+    text-decoration: none;
+    font-size: 1.4rem;
+    padding: 0.8rem 1.2rem;
+    border-radius: 6px;
+    border: 1px solid #e1bee7;
+    background-color: #f3e5f5;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin-left: 1rem;
+}
+.example-link:hover {
+    background-color: #e1bee7;
+    color: #4a148c;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(106, 27, 154, 0.2);
+}
+/* 播放器区域样式 */
+.player-section {
+    background: #121212;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
+    position: relative;
+    aspect-ratio: 16 / 9;
+    min-height: 300px;
+    transition: all 0.3s ease;
+}
+.player-section:hover {
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.22);
+}
+#ckplays {
+    width: 100%;
+    height: 100%;
+}
+/* 播放历史区域样式 */
+.history-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    margin: 2.5rem 0;
+    display: none;
+    animation: fadeIn 0.5s ease forwards;
+}
+.history-section.visible {
+    display: block;
+}
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+.history-header h3 {
+    font-size: 1.6rem;
+    color: #333;
+    font-weight: 600;
+}
+.clear-history {
+    color: #999;
+    font-size: 1.3rem;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+.clear-history:hover {
+    color: #ff4d4f;
+}
+.history-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+.history-item {
+    display: block;
+    padding: 1.2rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+.history-item:hover {
+    background: #fff;
+    border-color: #8e24aa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.history-item-title {
+    font-size: 1.3rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.history-item-time {
+    font-size: 1.1rem;
+    color: #999;
+}
+.no-history {
+    text-align: center;
+    color: #999;
+    padding: 2rem;
+    font-size: 1.4rem;
+}
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* 明亮模式样式覆盖 */
+body.light-mode {
+    background-color: #f5f5f7;
+    color: #1d1d1f;
+}
+.light-mode .input-section {
+    background: #ffffff;
+}
+.light-mode .history-section {
+    background: #ffffff;
+}
+.light-mode .history-item {
+    background: #f5f5f7;
+}
+.light-mode .history-item:hover {
+    background: #ffffff;
+}
+.light-mode header {
+    background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
+}
+.light-mode header::before {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+/* 底部样式 */
+.footer {
+    background: white;
+    padding: 2rem;
+    text-align: center;
+    color: #666;
+    font-size: 1.3rem;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    margin-top: auto;
+}
+.footer a {
+    color: #6a1b9a;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+.footer a:hover {
+    color: #8e24aa;
+}
+body.light-mode .footer {
+    background: #ffffff;
+    color: #86868b;
+}
+@media (max-width: 768px) {
+    .header-title h1 {
+        font-size: 1.8rem;
+    }
+    .main-nav {
+        display: none;
+    }
+    .container {
+        padding: 0 1.5rem;
+        margin: 1.5rem auto;
+    }
+    .input-section {
+        padding: 1.5rem;
+    }
+    .input-container {
+        flex-direction: column;
+    }
+    #url {
+        width: 100%;
+    }
+    .btn-group {
+        width: 100%;
+    }
+    #doplayers, #downloadBtn {
+        flex: 1;
+        min-width: 0;
+        padding: 1.2rem 1.5rem;
+        font-size: 1.4rem;
+    }
+    .example-link {
+        display: block;
+        margin: 1rem 0 0 0;
+        text-align: center;
+    }
+    .player-section {
+        aspect-ratio: 16 / 9;
+        min-height: 220px;
+    }
+    .history-list {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 </head>
 <body>
-
-<div class="video-container">
-    <div id="player" style="width:100%; height:100%;"></div>
+<header>
+    <div class="header-container">
+        <nav class="nav-container">
+            <div class="logo-container">
+                <i class="fas fa-play-circle" style="color: white; font-size: 2.8rem;"></i>
+            </div>
+            <nav class="main-nav">
+                <a href="#" class="active"><i class="fas fa-home"></i> 首页</a>
+                <a href="https://github.com/yyzq-cf/m3u8-online-player" target="_blank"><i class="fab fa-github"></i> GitHub</a>
+            </nav>
+        </nav>
+        <div class="header-title">
+            <h1>m3u8 在线播放器</h1>
+        </div>
+    </div>
+</header>
+<div class="container">
+    <section class="input-section">
+        <div class="input-container">
+            <input type="text" id="url" placeholder="请输入 m3u8 视频链接地址" autocomplete="off">
+            <div class="btn-group">
+                <button id="doplayers"><i class="fas fa-play"></i> 播放</button>
+                <button id="downloadBtn" title="下载视频"><i class="fas fa-download"></i> 下载</button>
+            </div>
+        </div>
+        <div class="example-links">
+            <span style="color: #666; font-size: 1.3rem;">示例：</span>
+            <a href="javascript:void(0)" class="example-link" data-url="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8">测试视频</a>
+            <a href="javascript:void(0)" class="example-link" data-url="https://cph-pub-ms.eku.ac.kr/onlinevod/cph.mp4.m3u8">测试视频2</a>
+        </div>
+    </section>
+    <section class="player-section" id="player-container">
+        <div id="ckplays"></div>
+    </section>
+    <section class="history-section" id="history-section">
+        <div class="history-header">
+            <h3><i class="fas fa-history"></i> 播放历史</h3>
+            <a href="javascript:void(0)" class="clear-history" id="clear-history">清空记录</a>
+        </div>
+        <div class="history-list" id="history-list"></div>
+    </section>
 </div>
-
+<footer class="footer">
+    <p>© 2025 m3u8在线播放器 | <a href="https://github.com/yyzq-cf/m3u8-online-player" target="_blank">GitHub</a></p>
+</footer>
 <script>
-    // إعدادات المشغل والروابط المستخرجة
-    var player = new Playerjs({
-        id: "player",
-        file: "https://iptv.ravynerinnn.workers.dev/index.m3u8?id=1356790",
-        poster: "https://cdn77-pic.others-cdn.com/videos/thumbs169lll/9d/a0/30/9da03084bc2d58a5539e14a884741aeb/9da03084bc2d58a5539e14a884741aeb.6.jpg",
-        default_quality: "480p"
+// 全局变量
+var dp;
+var hls;
+var currentVideoUrl = '';
+// 播放历史存储
+var playHistory = JSON.parse(localStorage.getItem('m3u8PlayHistory') || '[]');
+// 初始化
+$(function() {
+    initTheme();
+    renderHistory();
+    initEvents();
+});
+// 主题初始化
+function initTheme() {
+    var isDark = localStorage.getItem('theme') !== 'light';
+    if (isDark) {
+        $('body').removeClass('light-mode');
+    } else {
+        $('body').addClass('light-mode');
+    }
+}
+// 初始化事件
+function initEvents() {
+    // 点击播放
+    $('#doplayers').click(function() {
+        var url = $.trim($('#url').val());
+        if (!url) {
+            alert('请输入m3u8链接');
+            return;
+        }
+        playVideo(url);
     });
-</script>
+    // 示例链接点击
+    $('.example-link').click(function() {
+        var url = $(this).data('url');
+        $('#url').val(url);
+        playVideo(url);
+    });
+    // 回车播放
+    $('#url').keypress(function(e) {
+        if (e.which === 13) {
+            $('#doplayers').click();
+        }
+    });
+    // 清空历史
+    $('#clear-history').click(function() {
+        playHistory = [];
+        localStorage.setItem('m3u8PlayHistory', JSON.stringify(playHistory));
+        renderHistory();
+    });
+    // 下载按钮点击
+    $('#downloadBtn').click(function() {
+        if (currentVideoUrl) {
+            downloadVideo(currentVideoUrl);
+        }
+    });
+}
+// 播放视频
+function playVideo(url) {
+    currentVideoUrl = url;
+    $('#downloadBtn').show();
+    // 添加到历史记录
+    addToHistory(url);
+    // 创建DPlayer
+    if (dp) {
+        dp.destroy();
+    }
+    if (hls) {
+        hls.destroy();
+    }
+    
+    // 根据URL判断使用HLS.js还是DPlayer
+    if (Hls.isSupported()) {
+        hls = new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(document.getElementById('ckplays'));
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            document.getElementById('ckplays').play();
+        });
+        hls.on(Hls.Events.ERROR, function(event, data) {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        console.log('网络错误，尝试重新加载...');
+                        hls.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        console.log('媒体错误，尝试恢复...');
+                        hls.recoverMediaError();
+                        break;
+                    default:
+                        console.log('其他错误');
+                        hls.destroy();
+                        break;
+                }
+            }
+        });
+        
+        dp = new DPlayer({
+            container: document.getElementById('ckplays'),
+            autoplay: true,
+            theme: '#6a1b9a',
+            video: {
+                url: url,
+                type: 'customHls',
+                customType: {
+                    customHls: function(video, player) {
+                        video.src = url;
+                    }
+                }
+            }
+        });
+    } else if (dp) {
+        dp = new DPlayer({
+            container: document.getElementById('ckplays'),
+            autoplay: true,
+            theme: '#6a1b9a',
+            video: {
+                url: url,
+                type: 'hls'
+            }
+        });
+    } else {
+        // 移动端
+        dp = new DPlayer({
+            container: document.getElementById('ckplays'),
+            autoplay: true,
+            theme: '#6a1b9a',
+            video: {
+                url: url,
+                type: 'hls'
+            }
+        });
+    }
+}
+// 添加到历史记录
+function addToHistory(url) {
+    // 检查是否已存在
+    var exists = playHistory.some(function(item) {
+        return item.url === url;
+    });
+    if (!exists) {
+        playHistory.unshift({
+            url: url,
+            time: new Date().toLocaleString()
+        });
+        // 最多保存10条
+        if (playHistory.length > 10) {
+            playHistory.pop();
+        }
+        localStorage.setItem('m3u8PlayHistory', JSON.stringify(playHistory));
+        renderHistory();
+    }
+}
+// 渲染历史记录
+function renderHistory() {
+    var $historyList = $('#history-list');
+    if (playHistory.length === 0) {
+        $historyList.html('<div class="no-history">暂无播放记录</div>');
+        $('#history-section').removeClass('visible');
+        return;
+    }
+    $('#history-section').addClass('visible');
+    var html = '';
+    playHistory.forEach(function(item) {
+        var title = item.url.split('/').pop() || 'm3u8视频';
+        html += '<a href="javascript:void(0)" class="history-item" data-url="' + item.url + '">';
+        html += '<div class="history-item-title">' + title + '</div>';
+        html += '<div class="history-item-time">' + item.time + '</div>';
+        html += '</a>';
+    });
+    $historyList.html(html);
+    // 历史记录点击
+    $('.history-item').click(function() {
+        var url = $(this).data('url');
+        $('#url').val(url);
+        playVideo(url);
+    });
+}
+// 下载视频功能 - 纯前端直接下载
+async function downloadVideo(m3u8Url) {
+    var btn = $('#downloadBtn');
+    btn.html('<i class="fas fa-spinner fa-spin"></i> 下载中...');
+    
+    // 尝试多个 CORS 代理
+    var corsProxies = [
+        'https://corsproxy.io/?',
+        'https://api.allorigins.win/raw?url=',
+        'https://cors.div123.com/?',
+        ''
+    ];
+    
+    async function tryFetchWithProxies(url) {
+        for (var proxy of corsProxies) {
+            try {
+                var fetchUrl = proxy + encodeURIComponent(url);
+                var response = await fetch(fetchUrl, { 
+                    mode: proxy ? 'cors' : 'cors',
+                    headers: { 'Accept': '*/*' }
+                });
+                if (response.ok) return await response.text();
+            } catch (e) {
+                console.log('Proxy failed:', proxy);
+            }
+        }
+        throw new Error('所有代理都失败');
+    }
+    
+    async function downloadSegmentWithProxies(segmentUrl) {
+        for (var proxy of corsProxies) {
+            if (!proxy) continue;
+            try {
+                var fetchUrl = proxy + encodeURIComponent(segmentUrl);
+                var response = await fetch(fetchUrl, { mode: 'cors' });
+                if (response.ok) return await response.blob();
+            } catch (e) {}
+        }
+        return null;
+    }
+    
+    try {
+        btn.html('<i class="fas fa-spinner fa-spin"></i> 解析中...');
+        
+        // 1. 获取 m3u8 播放列表
+        var playlistText = await tryFetchWithProxies(m3u8Url);
+        
+        // 2. 解析所有 ts 片段
+        var lines = playlistText.split('\n');
+        var segments = [];
+        var baseUrl = m3u8Url.substring(0, m3u8Url.lastIndexOf('/') + 1);
+        
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            if (line && !line.startsWith('#') && (line.endsWith('.ts') || line.includes('.ts'))) {
+                var segmentUrl = line.startsWith('http') ? line : baseUrl + line;
+                segments.push(segmentUrl);
+            }
+        }
+        
+        if (segments.length === 0) {
+            // 可能是嵌套 m3u8，尝试解析EXT-X-STREAM-INF
+            for (var i = 0; i < lines.length; i++) {
+                if (lines[i].includes('EXT-X-STREAM-INF')) {
+                    var nextLine = lines[i + 1]?.trim();
+                    if (nextLine && !nextLine.startsWith('#')) {
+                        var bestQualityUrl = nextLine.startsWith('http') ? nextLine : baseUrl + nextLine;
+                        alert('检测到更高画质，正在切换...');
+                        return downloadVideo(bestQualityUrl);
+                    }
+                }
+            }
+            alert('无法解析视频片段，请检查链接是否正确');
+            btn.html('<i class="fas fa-download"></i> 下载');
+            return;
+        }
+        
+        alert('找到 ' + segments.length + ' 个视频片段，开始下载...');
+        
+        // 3. 下载所有片段
+        var blobs = [];
+        for (var j = 0; j < Math.min(segments.length, 100); j++) {
+            btn.html('<i class="fas fa-spinner fa-spin"></i> ' + Math.round((j + 1) / segments.length * 100) + '%');
+            
+            var blob = await downloadSegmentWithProxies(segments[j]);
+            if (blob) {
+                blobs.push(blob);
+            }
+            
+            // 每5个片段检查一次，让UI有时间更新
+            if (j % 5 === 0) await new Promise(r => setTimeout(r, 10));
+        }
+        
+        if (blobs.length === 0) {
+            alert('下载失败：视频服务器禁止跨域下载\n\n' + m3u8Url.substring(0, 50) + '...\n\n这是浏览器安全限制，无法绕过。建议使用 yt-dlp 或浏览器插件下载。');
+            btn.html('<i class="fas fa-download"></i> 下载');
+            return;
+        }
+        
+        // 4. 合并并下载
+        btn.html('<i class="fas fa-cog fa-spin"></i> 合并中...');
+        var mergedBlob = new Blob(blobs, { type: 'video/mp2t' });
+        
+        var url = URL.createObjectURL(mergedBlob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'video_' + Date.now() + '.ts';
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        btn.html('<i class="fas fa-download"></i> 下载');
+        alert('下载完成！共下载 ' + blobs.length + '/' + segments.length + ' 个片段');
+        
+    } catch (error) {
+        console.error(error);
+        alert('下载失败: ' + error.message + '\n\n请尝试使用 yt-dlp 工具下载');
+        btn.html('<i class="fas fa-download"></i> 下载');
+    }
+}
 
+// 复制到剪贴板
+function copyToClipboard(text) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+            console.log('复制成功');
+        }).catch(function(err) {
+            console.error('复制失败:', err);
+            // 备用方案
+            fallbackCopy(text);
+        });
+    } else {
+        fallbackCopy(text);
+    }
+}
+
+// 备用复制方法
+function fallbackCopy(text) {
+    var textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        document.execCommand('copy');
+        console.log('备用复制成功');
+    } catch (err) {
+        console.error('备用复制失败:', err);
+    }
+    document.body.removeChild(textarea);
+}
+</script>
 </body>
 </html>
