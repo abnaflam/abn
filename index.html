@@ -1,223 +1,30 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>كايدن - LIVE</title>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player</title>
+    <script src="https://lxpop.com/pjs30.js" type="text/javascript"></script>
     <style>
-        :root {
-            --main-color: #f43f5e;
-            --safe-bottom: 70px; 
-            --safe-top: 25px;
-        }
-
-        * { -webkit-tap-highlight-color: transparent; user-select: none; box-sizing: border-box; }
-
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: #000; overflow: hidden;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        #player-wrapper {
-            position: relative; width: 100vw; height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-            background: #000;
-        }
-
-        video { width: 100%; height: 100%; z-index: 1; transition: all 0.3s ease; }
-        
-        .fit-contain { object-fit: contain; }
-        .fit-fill { object-fit: fill; }
-        .fit-cover { object-fit: cover; }
-
-        #controls-overlay {
-            position: absolute; inset: 0; z-index: 999;
-            display: flex; flex-direction: column;
-            background: rgba(0,0,0,0.35);
-            opacity: 0; visibility: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-        }
-
-        #controls-overlay.visible { opacity: 1; visibility: visible; pointer-events: auto; }
-
-        .top-bar { padding: var(--safe-top) 20px 0; display: flex; justify-content: space-between; align-items: center; }
-        .mid-row { flex: 1; display: flex; align-items: center; justify-content: center; gap: 35px; }
-        .bottom-bar { 
-            padding-bottom: var(--safe-bottom); 
-            padding-left: 20px; padding-right: 20px;
-            display: flex; justify-content: space-between; align-items: center; 
-            background: linear-gradient(transparent, rgba(0,0,0,0.9));
-        }
-
-        .icon-btn {
-            background: rgba(255,255,255,0.12); border: 1.5px solid rgba(255,255,255,0.15);
-            color: #fff; border-radius: 14px; width: 52px; height: 52px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: transform 0.1s;
-        }
-        .icon-btn:active { transform: scale(0.9); }
-        .btn-play { width: 70px; height: 70px; border-radius: 50%; background: var(--main-color); border: none; box-shadow: 0 0 20px rgba(244,63,94,0.3); }
-
-        .badge { background: var(--main-color); padding: 3px 10px; border-radius: 5px; font-size: 11px; font-weight: bold; color: #fff; text-transform: uppercase; }
-        .mode-info { color: #fff; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px; }
-
-        #loader { position: absolute; z-index: 10; color: var(--main-color); display: none; }
+        body { background-color: #000; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .video-container { width: 100%; max-width: 800px; aspect-ratio: 16/9; background: #1a1a1a; }
     </style>
 </head>
-<body onclick="handleGlobalClick()">
+<body>
 
-<div id="player-wrapper">
-    <i id="loader" class="fas fa-circle-notch fa-spin fa-3x"></i>
-    <video id="main-video" class="fit-contain" playsinline crossorigin="anonymous"></video>
-
-    <div id="controls-overlay">
-        <div class="top-bar">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <span class="badge">LIVE</span>
-                <span id="ch-title" style="color:#fff; font-weight:600; font-size:15px;">KD-TV PRO</span>
-            </div>
-            <div id="fit-text" class="mode-info">ORIGINAL</div>
-        </div>
-
-        <div class="mid-row">
-            <div class="icon-btn" onclick="event.stopPropagation(); seek(-10)"><i data-feather="rotate-ccw"></i></div>
-            <div class="icon-btn btn-play" onclick="event.stopPropagation(); togglePlay()"><i id="play-icon" data-feather="play"></i></div>
-            <div class="icon-btn" onclick="event.stopPropagation(); seek(10)"><i data-feather="rotate-cw"></i></div>
-        </div>
-
-        <div class="bottom-bar">
-            <div class="icon-btn" onclick="event.stopPropagation(); toggleMute()"><i id="mute-icon" data-feather="volume-2"></i></div>
-            <div style="display:flex; gap:12px;">
-                <div class="icon-btn" title="تبديل التدوير" onclick="event.stopPropagation(); toggleOrientation()"><i data-feather="repeat"></i></div>
-                <div class="icon-btn" title="أبعاد الشاشة" onclick="event.stopPropagation(); cycleAspect()"><i data-feather="monitor"></i></div>
-                <div class="icon-btn" title="ملء الشاشة" onclick="event.stopPropagation(); toggleFull()"><i data-feather="maximize"></i></div>
-            </div>
-        </div>
-    </div>
+<div class="video-container">
+    <div id="player" style="width:100%; height:100%;"></div>
 </div>
 
 <script>
-    // 1. قاعدة بيانات القنوات (نظام الـ ID)
-    const channels = {
-        "bein1": { id: "1269943", name: "beIN SPORTS 1" },
-        "bein2": { id: "1269944", name: "beIN SPORTS 2" },
-        "bein3": { id: "1269945", name: "beIN SPORTS 3" },
-        "bein4": { id: "1269946", name: "beIN SPORTS 4" },
-        "bein5": { id: "1269947", name: "beIN SPORTS 5" },
-        "bein6": { id: "1269948", name: "beIN SPORTS 6" },
-        "bein7": { id: "1269949", name: "beIN SPORTS 7" },
-        "bein8": { id: "1269950", name: "beIN SPORTS 8" },
-        "bein9": { id: "1269951", name: "beIN SPORTS 9" }
-    };
-
-    // 2. قراءة الـ ID من الرابط
-    const urlParams = new URLSearchParams(window.location.search);
-    const getID = urlParams.get('id') || "bein1"; // القناة الافتراضية
-    const currentCH = channels[getID] || channels["bein1"];
-    
-    const streamUrl = "https://iptv.ravynerinnn.workers.dev/index.m3u8?id=" + currentCH.id;
-    document.getElementById('ch-title').innerText = currentCH.name;
-
-    const video = document.getElementById('main-video');
-    const overlay = document.getElementById('controls-overlay');
-    const playIcon = document.getElementById('play-icon');
-    const loader = document.getElementById('loader');
-    const fitText = document.getElementById('fit-text');
-
-    let hideTimer;
-    feather.replace();
-
-    function initPlayer() {
-        if (Hls.isSupported()) {
-            const hls = new Hls({
-                manifestLoadingMaxRetry: 4,
-                levelLoadingMaxRetry: 4,
-                xhrSetup: function (xhr) { xhr.withCredentials = false; }
-            });
-            hls.loadSource(streamUrl);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                video.play().catch(() => showControls());
-            });
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) hls.recoverMediaError();
-            });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = streamUrl;
-        }
-    }
-
-    initPlayer();
-
-    function showControls() {
-        overlay.classList.add('visible');
-        clearTimeout(hideTimer);
-        if (!video.paused) {
-            hideTimer = setTimeout(() => overlay.classList.remove('visible'), 4000);
-        }
-    }
-
-    function handleGlobalClick() {
-        overlay.classList.contains('visible') ? overlay.classList.remove('visible') : showControls();
-    }
-
-    function togglePlay() {
-        video.paused ? video.play() : video.pause();
-        setIcon(playIcon, video.paused ? 'play' : 'pause');
-        showControls();
-    }
-
-    function toggleOrientation() {
-        if (screen.orientation && screen.orientation.lock) {
-            if (screen.orientation.type.includes('portrait')) {
-                screen.orientation.lock('landscape').catch(() => {});
-            } else {
-                screen.orientation.unlock();
-            }
-        }
-        showControls();
-    }
-
-    const modes = ['fit-contain', 'fit-fill', 'fit-cover'];
-    const labels = ['ORIGINAL', 'STRETCH', 'ZOOM FULL'];
-    let currentMode = 0;
-
-    function cycleAspect() {
-        video.classList.remove(...modes);
-        currentMode = (currentMode + 1) % modes.length;
-        video.classList.add(modes[currentMode]);
-        fitText.innerText = labels[currentMode];
-        showControls();
-    }
-
-    function toggleMute() {
-        video.muted = !video.muted;
-        setIcon(document.getElementById('mute-icon'), video.muted ? 'volume-x' : 'volume-2');
-        showControls();
-    }
-
-    function toggleFull() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => video.webkitEnterFullscreen());
-        } else {
-            document.exitFullscreen();
-        }
-        showControls();
-    }
-
-    function seek(s) { video.currentTime += s; showControls(); }
-    function setIcon(el, name) { el.setAttribute('data-feather', name); feather.replace(); }
-
-    video.onwaiting = () => loader.style.display = 'block';
-    video.onplaying = () => { loader.style.display = 'none'; setIcon(playIcon, 'pause'); };
+    // إعدادات المشغل والروابط المستخرجة
+    var player = new Playerjs({
+        id: "player",
+        file: "https://iptv.ravynerinnn.workers.dev/index.m3u8?id=1356790",
+        poster: "https://cdn77-pic.others-cdn.com/videos/thumbs169lll/9d/a0/30/9da03084bc2d58a5539e14a884741aeb/9da03084bc2d58a5539e14a884741aeb.6.jpg",
+        default_quality: "480p"
+    });
 </script>
+
 </body>
 </html>
